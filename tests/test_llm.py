@@ -79,3 +79,10 @@ def test_commits_sharing_a_short_sha_prefix_get_their_own_answers():
         (Section.PERF, "Faster import"),
         (Section.FIX, "Fix login"),
     ]
+
+
+def test_blank_summary_falls_back_to_the_subject():
+    model = FakeListChatModel(responses=[reply((1, "fix", "   "))])
+    (entry,) = classify_with_llm([commit("a", "Fix crash on empty config")], model)
+    assert entry.section is Section.FIX
+    assert entry.summary == "Fix crash on empty config"

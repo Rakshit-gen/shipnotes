@@ -95,7 +95,8 @@ def classify_with_llm(
         if item is None:
             entries.append(Entry(c, Section.OTHER, c.subject))
         else:
-            entries.append(Entry(c, Section(item.section), item.summary))
+            # A blank summary would render as an empty bullet, so keep the subject.
+            entries.append(Entry(c, Section(item.section), item.summary.strip() or c.subject))
     return entries
 
 
