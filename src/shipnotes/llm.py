@@ -2,6 +2,7 @@
 
 from typing import Literal
 
+from langchain_core.exceptions import OutputParserException
 from langchain_core.language_models import BaseChatModel
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -59,7 +60,10 @@ def build_chain(model: BaseChatModel) -> Runnable:
     prompt = ChatPromptTemplate.from_messages(
         [("system", SYSTEM_PROMPT), ("human", HUMAN_PROMPT)]
     ).partial(format_instructions=parser.get_format_instructions())
-    return prompt | model | parser
+    # Models sometimes return broken JSON. A second try usually fixes it.
+    return (prompt | model | parser).with_retry(
+        retry_if_exception_type=(OutputParserException,), stop_after_attempt=2
+    )
 
 
 def classify_with_llm(
@@ -69,8 +73,13 @@ def classify_with_llm(
     if not commits:
         return []
     chunks = [commits[i : i + batch_size] for i in range(0, len(commits), batch_size)]
-    results = build_chain(model).batch([{"commits": format_commits(c)} for c in chunks])
-    by_sha = {item.sha[:7]: item for batch in results for item in batch.items}
+    results = build_chain(model).batch(
+        [{"commits": format_commits(c)} for c in chunks], return_exceptions=True
+    )
+    # A batch that still fails after the retry falls through to Section.OTHER below
+    # instead of losing the whole release.
+    ok = [r for r in results if isinstance(r, ClassifiedBatch)]
+    by_sha = {item.sha[:7]: item for batch in ok for item in batch.items}
     entries = []
     for c in commits:
         item = by_sha.get(c.short_sha)
