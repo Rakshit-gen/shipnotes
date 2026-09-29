@@ -26,3 +26,22 @@ Options:
 
 The model defaults to `openai/gpt-oss-20b` on Groq. Set `SHIPNOTES_MODEL` to use
 another one.
+
+## How it works
+
+1. `git log --reverse` reads the range. Fields are split on ASCII unit and
+   record separators so multi-line bodies survive.
+2. Each subject is matched against the Conventional Commits pattern. A `!` or
+   a `BREAKING CHANGE:` footer puts the commit under breaking changes, even if
+   the subject is free text.
+3. The leftovers are sent to the model in batches of 25 with the chain
+   `prompt | ChatGroq | PydanticOutputParser`. Batches run in parallel through
+   LangChain's `batch`.
+4. Broken JSON is retried once. If a batch still fails, or the model skips a
+   commit, that commit shows up under "Other changes" with its original
+   subject. Nothing is dropped.
+5. Entries are rendered as Markdown in a fixed section order, followed by the
+   list of contributors.
+
+Tests use LangChain's `FakeListChatModel`, so `uv run pytest` needs no key and
+no network.
