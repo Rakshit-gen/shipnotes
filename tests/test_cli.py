@@ -23,3 +23,9 @@ def test_cli_writes_to_a_file(repo, tmp_path):
 def test_cli_reports_bad_ranges(repo, capsys):
     assert main(["nope..HEAD", "--repo", str(repo), "--no-llm"]) == 1
     assert capsys.readouterr().err.startswith("shipnotes: ")
+
+
+def test_missing_api_key_is_a_clear_error(repo, capsys, monkeypatch):
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    assert main(["v0.1.0..HEAD", "--repo", str(repo)]) == 1
+    assert "GROQ_API_KEY is not set" in capsys.readouterr().err

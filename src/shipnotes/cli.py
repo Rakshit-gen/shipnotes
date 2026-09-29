@@ -1,6 +1,7 @@
 """Command line entry point."""
 
 import argparse
+import os
 import sys
 
 from shipnotes.gitlog import GitError, read_commits
@@ -28,6 +29,13 @@ def main(argv: list[str] | None = None) -> int:
 
     model = None
     if not args.no_llm:
+        if not os.environ.get("GROQ_API_KEY"):
+            print(
+                "shipnotes: GROQ_API_KEY is not set. Set it, or use --no-llm to sort by "
+                "commit convention only.",
+                file=sys.stderr,
+            )
+            return 1
         from shipnotes.llm import groq_model
 
         model = groq_model()
