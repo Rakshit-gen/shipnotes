@@ -13,9 +13,11 @@ HEADINGS = {
 }
 
 
-def render(title: str, entries: list[Entry]) -> str:
+def render(title: str, entries: list[Entry], include_internal: bool = False) -> str:
     lines = [f"## {title}", ""]
     for section, heading in HEADINGS.items():
+        if section is Section.INTERNAL and not include_internal:
+            continue
         items = [e for e in entries if e.section is section]
         if not items:
             continue

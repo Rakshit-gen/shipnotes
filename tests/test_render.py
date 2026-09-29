@@ -27,3 +27,9 @@ def test_sections_render_in_fixed_order_and_skip_empty_ones():
 
 def test_no_entries_renders_only_the_title():
     assert render("v1.2.0", []) == "## v1.2.0\n"
+
+
+def test_internal_changes_are_hidden_unless_asked_for():
+    entries = [entry("a", Section.INTERNAL, "Bump ruff")]
+    assert "Bump ruff" not in render("v1", entries)
+    assert "### Internal" in render("v1", entries, include_internal=True)
