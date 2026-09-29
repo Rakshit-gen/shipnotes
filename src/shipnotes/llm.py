@@ -8,6 +8,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable
 from pydantic import BaseModel, Field
 
+from shipnotes.classify import Entry, Section
 from shipnotes.gitlog import Commit
 
 SectionName = Literal["breaking", "feature", "fix", "perf", "docs", "internal"]
@@ -59,3 +60,19 @@ def build_chain(model: BaseChatModel) -> Runnable:
         [("system", SYSTEM_PROMPT), ("human", HUMAN_PROMPT)]
     ).partial(format_instructions=parser.get_format_instructions())
     return prompt | model | parser
+
+
+def classify_with_llm(commits: list[Commit], model: BaseChatModel) -> list[Entry]:
+    """Classify commits with the model. Commits it skips land in Section.OTHER."""
+    if not commits:
+        return []
+    result: ClassifiedBatch = build_chain(model).invoke({"commits": format_commits(commits)})
+    by_sha = {item.sha[:7]: item for item in result.items}
+    entries = []
+    for c in commits:
+        item = by_sha.get(c.short_sha)
+        if item is None:
+            entries.append(Entry(c, Section.OTHER, c.subject))
+        else:
+            entries.append(Entry(c, Section(item.section), item.summary))
+    return entries
