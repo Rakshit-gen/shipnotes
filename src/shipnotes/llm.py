@@ -1,5 +1,6 @@
 """Classify free-text commit subjects with a chat model through LangChain."""
 
+import os
 from typing import Literal
 
 from langchain_core.exceptions import OutputParserException
@@ -88,3 +89,13 @@ def classify_with_llm(
         else:
             entries.append(Entry(c, Section(item.section), item.summary))
     return entries
+
+
+# Checked against Groq's model list on 2026-09-29. Override with SHIPNOTES_MODEL.
+DEFAULT_MODEL = "openai/gpt-oss-20b"
+
+
+def groq_model() -> BaseChatModel:
+    from langchain_groq import ChatGroq
+
+    return ChatGroq(model=os.environ.get("SHIPNOTES_MODEL", DEFAULT_MODEL), temperature=0)
