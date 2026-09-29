@@ -54,7 +54,10 @@ def read_commits(repo: str, rev_range: str) -> list[Commit]:
             rev_range,
         ],
         capture_output=True,
-        text=True,
+        # git writes commit messages as UTF-8. Decoding with the locale's encoding
+        # crashed on non-ASCII subjects under an ASCII locale.
+        encoding="utf-8",
+        errors="replace",
     )
     if result.returncode != 0:
         raise GitError(result.stderr.strip() or f"git log failed for {rev_range}")

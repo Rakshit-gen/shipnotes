@@ -1,3 +1,7 @@
+import os
+import subprocess
+import sys
+
 from conftest import git
 
 from shipnotes.cli import main
@@ -44,3 +48,13 @@ def test_range_ending_at_a_tag_uses_the_tag(repo, capsys):
     git(repo.path, "tag", "v0.2.0")
     assert main(["v0.1.0..v0.2.0", "--repo", str(repo), "--no-llm"]) == 0
     assert capsys.readouterr().out.startswith("## v0.2.0\n")
+
+
+def test_non_ascii_subjects_work_under_an_ascii_locale(repo, tmp_path):
+    repo.commit("fix: handle café names")
+    target = tmp_path / "NOTES.md"
+    env = os.environ | {"LC_ALL": "C", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"}
+    cmd = [sys.executable, "-m", "shipnotes.cli", "v0.1.0..HEAD", "--repo", str(repo)]
+    result = subprocess.run([*cmd, "--no-llm", "-o", str(target)], env=env, capture_output=True)
+    assert result.returncode == 0, result.stderr.decode()
+    assert "café" in target.read_text(encoding="utf-8")

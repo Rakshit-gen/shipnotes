@@ -46,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
     title = args.title or (end if end and end != "HEAD" else "Unreleased")
     text = render(title, build_entries(commits, model), include_internal=args.internal)
     if args.output:
-        with open(args.output, "w") as f:
+        with open(args.output, "w", encoding="utf-8") as f:
             f.write(text)
     else:
         sys.stdout.write(text)
