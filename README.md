@@ -45,3 +45,14 @@ another one.
 
 Tests use LangChain's `FakeListChatModel`, so `uv run pytest` needs no key and
 no network.
+
+## Measured vs Claimed
+
+| Claim | Value | How measured | Date |
+|---|---|---|---|
+| Commits placed in a real section (not "Other") | 40 of 40, on 3 of 3 runs | `shipnotes HEAD~40..HEAD --internal` on a 40 commit range of a side project with free text subjects, `openai/gpt-oss-20b` on Groq | 2026-09-29 |
+| Wall time for 40 free text commits | 16 to 35 s | Same 3 runs, timed from the shell on a laptop | 2026-09-29 |
+| Wall time with `--no-llm` | 0.49 s | Same 40 commit range, `time` from the shell, includes `uv run` startup | 2026-09-29 |
+
+Whether a section is the *right* one was checked by reading the output, not
+scored against a labeled set.
