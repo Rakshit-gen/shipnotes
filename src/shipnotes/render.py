@@ -26,4 +26,7 @@ def render(title: str, entries: list[Entry], include_internal: bool = False) -> 
             scope = f"**{e.scope}:** " if e.scope else ""
             lines.append(f"- {scope}{e.summary} ({e.commit.short_sha})")
         lines.append("")
+    authors = sorted({e.commit.author for e in entries})
+    if authors:
+        lines += ["### Contributors", "", ", ".join(authors), ""]
     return "\n".join(lines).rstrip() + "\n"

@@ -21,7 +21,9 @@ def test_sections_render_in_fixed_order_and_skip_empty_ones():
         "### Breaking changes\n\n"
         "- **build:** Drop Python 3.10 (bbbbbbb)\n\n"
         "### Fixes\n\n"
-        "- Fix crash (aaaaaaa)\n"
+        "- Fix crash (aaaaaaa)\n\n"
+        "### Contributors\n\n"
+        "Ana\n"
     )
 
 
@@ -33,3 +35,10 @@ def test_internal_changes_are_hidden_unless_asked_for():
     entries = [entry("a", Section.INTERNAL, "Bump ruff")]
     assert "Bump ruff" not in render("v1", entries)
     assert "### Internal" in render("v1", entries, include_internal=True)
+
+
+def test_contributors_are_listed_once_in_order():
+    a = entry("a", Section.FIX, "One")
+    b = Entry(Commit("b" * 40, "Ben", "Two"), Section.FIX, "Two")
+    c = Entry(Commit("c" * 40, "Ana", "Three"), Section.FIX, "Three")
+    assert render("v1", [b, a, c]).endswith("### Contributors\n\nAna, Ben\n")
