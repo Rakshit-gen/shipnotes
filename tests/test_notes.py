@@ -19,7 +19,7 @@ def test_only_unconventional_commits_reach_the_model():
             seen.append(messages[-1].content)
             return super()._call(messages, *args, **kwargs)
 
-    answer = {"items": [{"sha": "bbbbbbb", "section": "perf", "summary": "Faster start"}]}
+    answer = {"items": [{"id": 1, "section": "perf", "summary": "Faster start"}]}
     model = Spy(responses=[json.dumps(answer)])
     commits = [commit("a", "fix: crash on empty file"), commit("b", "Speed up startup")]
     entries = build_entries(commits, model)

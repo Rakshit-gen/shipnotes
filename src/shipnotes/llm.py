@@ -17,7 +17,7 @@ SectionName = Literal["breaking", "feature", "fix", "perf", "docs", "internal"]
 
 
 class Classified(BaseModel):
-    sha: str = Field(description="The short sha exactly as given")
+    id: int = Field(description="The commit number exactly as given")
     section: SectionName
     summary: str = Field(description="One line, user facing, present tense, no trailing period")
 
@@ -47,9 +47,12 @@ HUMAN_PROMPT = """Commits:
 
 
 def format_commits(commits: list[Commit]) -> str:
+    # Commits are numbered per batch instead of labeled by short sha: two commits
+    # in a big repo can share a 7 character prefix, and a number is also harder
+    # for the model to garble.
     lines = []
-    for c in commits:
-        lines.append(f"- {c.short_sha}: {c.subject}")
+    for n, c in enumerate(commits, 1):
+        lines.append(f"- {n}: {c.subject}")
         if c.body:
             # The first body line usually says why; the rest is noise for this task.
             lines.append(f"  {c.body.splitlines()[0]}")
@@ -79,11 +82,16 @@ def classify_with_llm(
     )
     # A batch that still fails after the retry falls through to Section.OTHER below
     # instead of losing the whole release.
-    ok = [r for r in results if isinstance(r, ClassifiedBatch)]
-    by_sha = {item.sha[:7]: item for batch in ok for item in batch.items}
+    answers = {}
+    for chunk, result in zip(chunks, results, strict=True):
+        if isinstance(result, ClassifiedBatch):
+            by_id = {item.id: item for item in result.items}
+            for n, c in enumerate(chunk, 1):
+                if n in by_id:
+                    answers[id(c)] = by_id[n]
     entries = []
     for c in commits:
-        item = by_sha.get(c.short_sha)
+        item = answers.get(id(c))
         if item is None:
             entries.append(Entry(c, Section.OTHER, c.subject))
         else:
