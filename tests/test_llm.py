@@ -50,3 +50,16 @@ def test_long_ranges_are_split_into_batches():
     commits = [commit("a", "1"), commit("b", "2"), commit("c", "3")]
     entries = classify_with_llm(commits, model, batch_size=2)
     assert [e.summary for e in entries] == ["One", "Two", "Three"]
+
+
+def test_broken_json_is_retried():
+    model = FakeListChatModel(responses=["not json", reply(("aaaaaaa", "feature", "Add x"))])
+    (entry,) = classify_with_llm([commit("a", "add x")], model)
+    assert entry.section is Section.FEATURE
+
+
+def test_batch_that_keeps_failing_falls_back_to_other():
+    model = FakeListChatModel(responses=["not json", "still not json"])
+    (entry,) = classify_with_llm([commit("a", "add x")], model)
+    assert entry.section is Section.OTHER
+    assert entry.summary == "add x"
