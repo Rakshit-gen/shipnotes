@@ -98,4 +98,11 @@ DEFAULT_MODEL = "openai/gpt-oss-20b"
 def groq_model() -> BaseChatModel:
     from langchain_groq import ChatGroq
 
-    return ChatGroq(model=os.environ.get("SHIPNOTES_MODEL", DEFAULT_MODEL), temperature=0)
+    # gpt-oss spends output tokens on reasoning first. With Groq's default cap the JSON
+    # got cut off mid list, so keep reasoning short and leave room for the answer.
+    return ChatGroq(
+        model=os.environ.get("SHIPNOTES_MODEL", DEFAULT_MODEL),
+        temperature=0,
+        reasoning_effort="low",
+        max_tokens=8192,
+    )
