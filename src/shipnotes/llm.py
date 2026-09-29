@@ -2,7 +2,13 @@
 
 from typing import Literal
 
+from langchain_core.language_models import BaseChatModel
+from langchain_core.output_parsers import PydanticOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import Runnable
 from pydantic import BaseModel, Field
+
+from shipnotes.gitlog import Commit
 
 SectionName = Literal["breaking", "feature", "fix", "perf", "docs", "internal"]
 
@@ -35,3 +41,21 @@ in the commit.
 
 HUMAN_PROMPT = """Commits:
 {commits}"""
+
+
+def format_commits(commits: list[Commit]) -> str:
+    lines = []
+    for c in commits:
+        lines.append(f"- {c.short_sha}: {c.subject}")
+        if c.body:
+            # The first body line usually says why; the rest is noise for this task.
+            lines.append(f"  {c.body.splitlines()[0]}")
+    return "\n".join(lines)
+
+
+def build_chain(model: BaseChatModel) -> Runnable:
+    parser = PydanticOutputParser(pydantic_object=ClassifiedBatch)
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", SYSTEM_PROMPT), ("human", HUMAN_PROMPT)]
+    ).partial(format_instructions=parser.get_format_instructions())
+    return prompt | model | parser
