@@ -14,6 +14,8 @@ class Section(StrEnum):
     PERF = "perf"
     DOCS = "docs"
     INTERNAL = "internal"
+    # Commits nothing could place. Kept so they are never silently dropped.
+    OTHER = "other"
 
 
 TYPE_TO_SECTION = {
