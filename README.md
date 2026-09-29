@@ -56,3 +56,19 @@ no network.
 
 Whether a section is the *right* one was checked by reading the output, not
 scored against a labeled set.
+
+## Status
+
+Works:
+
+- Conventional and free text commits, breaking change detection, batching,
+  retry on bad JSON, file output.
+
+Known limits:
+
+- When the range ends at `HEAD` the default title is `HEAD`. Pass `--title`.
+- Merge commits are included like any other commit.
+- Contributors are git author names, not GitHub handles.
+- With `openai/gpt-oss-20b` the output token cap matters. At Groq's default
+  cap of 2048 tokens the model spent most of it on reasoning and the JSON was
+  cut off, so the client sets `reasoning_effort="low"` and `max_tokens=8192`.
