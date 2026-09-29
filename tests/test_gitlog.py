@@ -1,4 +1,6 @@
-from shipnotes.gitlog import FIELD_SEP, RECORD_SEP, parse_log
+import pytest
+
+from shipnotes.gitlog import FIELD_SEP, RECORD_SEP, GitError, parse_log, read_commits
 
 
 def record(sha, author, subject, body=""):
@@ -21,3 +23,15 @@ def test_parse_log_keeps_multiline_body():
 
 def test_parse_log_empty_input():
     assert parse_log("") == []
+
+
+def test_read_commits_returns_range_oldest_first(repo):
+    repo.commit("feat: first")
+    repo.commit("fix: second")
+    commits = read_commits(str(repo), "v0.1.0..HEAD")
+    assert [c.subject for c in commits] == ["feat: first", "fix: second"]
+
+
+def test_read_commits_bad_range_raises(repo):
+    with pytest.raises(GitError):
+        read_commits(str(repo), "nope..HEAD")
