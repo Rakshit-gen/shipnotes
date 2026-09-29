@@ -1,4 +1,5 @@
 import pytest
+from conftest import git
 
 from shipnotes.gitlog import FIELD_SEP, RECORD_SEP, GitError, parse_log, read_commits
 
@@ -42,3 +43,11 @@ def test_range_is_never_read_as_a_git_option(repo, tmp_path):
     with pytest.raises(GitError):
         read_commits(str(repo), f"--output={target}")
     assert not target.exists()
+
+
+def test_merge_commits_are_skipped(repo):
+    git(repo.path, "checkout", "-q", "-b", "feature")
+    repo.commit("feat: on a branch")
+    git(repo.path, "checkout", "-q", "main")
+    git(repo.path, "merge", "-q", "--no-ff", "feature", "-m", "Merge branch 'feature'")
+    assert [c.subject for c in read_commits(str(repo), "v0.1.0..HEAD")] == ["feat: on a branch"]

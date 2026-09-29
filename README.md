@@ -29,7 +29,7 @@ another one.
 
 ## How it works
 
-1. `git log --reverse` reads the range. Fields are split on ASCII unit and
+1. `git log --reverse --no-merges` reads the range. Fields are split on ASCII unit and
    record separators so multi-line bodies survive.
 2. Each subject is matched against the Conventional Commits pattern. A `!` or
    a `BREAKING CHANGE:` footer puts the commit under breaking changes, even if
@@ -66,7 +66,6 @@ Works:
 
 Known limits:
 
-- Merge commits are included like any other commit.
 - Contributors are git author names, not GitHub handles.
 - With `openai/gpt-oss-20b` the output token cap matters. At Groq's default
   cap of 2048 tokens the model spent most of it on reasoning and the JSON was

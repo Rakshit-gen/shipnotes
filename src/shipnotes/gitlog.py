@@ -47,6 +47,8 @@ def read_commits(repo: str, rev_range: str) -> list[Commit]:
             repo,
             "log",
             "--reverse",
+            # Merge commits repeat what the merged commits already say.
+            "--no-merges",
             f"--format={LOG_FORMAT}",
             "--end-of-options",
             rev_range,
