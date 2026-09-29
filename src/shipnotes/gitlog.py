@@ -30,3 +30,19 @@ def parse_log(raw: str) -> list[Commit]:
         sha, author, subject, body = record.split(FIELD_SEP, 3)
         commits.append(Commit(sha=sha, author=author, subject=subject, body=body.strip()))
     return commits
+
+
+class GitError(RuntimeError):
+    pass
+
+
+def read_commits(repo: str, rev_range: str) -> list[Commit]:
+    """Return commits in rev_range (for example v1.0..v1.1), oldest first."""
+    result = subprocess.run(
+        ["git", "-C", repo, "log", "--reverse", f"--format={LOG_FORMAT}", rev_range],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise GitError(result.stderr.strip() or f"git log failed for {rev_range}")
+    return parse_log(result.stdout)
