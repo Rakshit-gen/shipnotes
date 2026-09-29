@@ -40,7 +40,10 @@ def main(argv: list[str] | None = None) -> int:
 
         model = groq_model()
 
-    title = args.title or args.range.split("..")[-1] or "Unreleased"
+    end = args.range.split("..")[-1]
+    # "v1.0..HEAD" is the usual way to draft notes before tagging, and "## HEAD" is
+    # not a useful heading.
+    title = args.title or (end if end and end != "HEAD" else "Unreleased")
     text = render(title, build_entries(commits, model), include_internal=args.internal)
     if args.output:
         with open(args.output, "w") as f:

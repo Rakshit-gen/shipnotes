@@ -21,7 +21,7 @@ Options:
 |---|---|
 | `--no-llm` | Sort by commit convention only. Needs no API key. |
 | `--internal` | Also list tests, CI, refactors and other internal changes. |
-| `--title` | Heading for the notes. Defaults to the end of the range. |
+| `--title` | Heading for the notes. Defaults to the end of the range, or "Unreleased" when that is `HEAD`. |
 | `-o FILE` | Write to a file instead of stdout. |
 
 The model defaults to `openai/gpt-oss-20b` on Groq. Set `SHIPNOTES_MODEL` to use
@@ -66,7 +66,6 @@ Works:
 
 Known limits:
 
-- When the range ends at `HEAD` the default title is `HEAD`. Pass `--title`.
 - Merge commits are included like any other commit.
 - Contributors are git author names, not GitHub handles.
 - With `openai/gpt-oss-20b` the output token cap matters. At Groq's default

@@ -1,3 +1,5 @@
+from conftest import git
+
 from shipnotes.cli import main
 
 
@@ -29,3 +31,16 @@ def test_missing_api_key_is_a_clear_error(repo, capsys, monkeypatch):
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
     assert main(["v0.1.0..HEAD", "--repo", str(repo)]) == 1
     assert "GROQ_API_KEY is not set" in capsys.readouterr().err
+
+
+def test_range_ending_at_head_is_titled_unreleased(repo, capsys):
+    repo.commit("fix: x")
+    assert main(["v0.1.0..HEAD", "--repo", str(repo), "--no-llm"]) == 0
+    assert capsys.readouterr().out.startswith("## Unreleased\n")
+
+
+def test_range_ending_at_a_tag_uses_the_tag(repo, capsys):
+    repo.commit("fix: x")
+    git(repo.path, "tag", "v0.2.0")
+    assert main(["v0.1.0..v0.2.0", "--repo", str(repo), "--no-llm"]) == 0
+    assert capsys.readouterr().out.startswith("## v0.2.0\n")
