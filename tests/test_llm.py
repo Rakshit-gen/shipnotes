@@ -86,3 +86,9 @@ def test_blank_summary_falls_back_to_the_subject():
     (entry,) = classify_with_llm([commit("a", "Fix crash on empty config")], model)
     assert entry.section is Section.FIX
     assert entry.summary == "Fix crash on empty config"
+
+
+def test_multi_line_summary_is_kept_on_one_line():
+    model = FakeListChatModel(responses=[reply((1, "fix", "Fix crash\n  on empty config"))])
+    (entry,) = classify_with_llm([commit("a", "fix it")], model)
+    assert entry.summary == "Fix crash on empty config"
