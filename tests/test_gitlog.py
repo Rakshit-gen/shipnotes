@@ -35,3 +35,10 @@ def test_read_commits_returns_range_oldest_first(repo):
 def test_read_commits_bad_range_raises(repo):
     with pytest.raises(GitError):
         read_commits(str(repo), "nope..HEAD")
+
+
+def test_range_is_never_read_as_a_git_option(repo, tmp_path):
+    target = tmp_path / "written.txt"
+    with pytest.raises(GitError):
+        read_commits(str(repo), f"--output={target}")
+    assert not target.exists()

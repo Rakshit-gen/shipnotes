@@ -39,7 +39,18 @@ class GitError(RuntimeError):
 def read_commits(repo: str, rev_range: str) -> list[Commit]:
     """Return commits in rev_range (for example v1.0..v1.1), oldest first."""
     result = subprocess.run(
-        ["git", "-C", repo, "log", "--reverse", f"--format={LOG_FORMAT}", rev_range],
+        # --end-of-options stops a range like "--output=x" from being read as a git
+        # option, which would let the argument write arbitrary files.
+        [
+            "git",
+            "-C",
+            repo,
+            "log",
+            "--reverse",
+            f"--format={LOG_FORMAT}",
+            "--end-of-options",
+            rev_range,
+        ],
         capture_output=True,
         text=True,
     )
