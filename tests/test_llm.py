@@ -38,3 +38,15 @@ def test_commit_the_model_skipped_goes_to_other():
 def test_no_commits_skips_the_model():
     model = FakeListChatModel(responses=[])
     assert classify_with_llm([], model) == []
+
+
+def test_long_ranges_are_split_into_batches():
+    model = FakeListChatModel(
+        responses=[
+            reply(("aaaaaaa", "fix", "One"), ("bbbbbbb", "fix", "Two")),
+            reply(("ccccccc", "docs", "Three")),
+        ]
+    )
+    commits = [commit("a", "1"), commit("b", "2"), commit("c", "3")]
+    entries = classify_with_llm(commits, model, batch_size=2)
+    assert [e.summary for e in entries] == ["One", "Two", "Three"]
