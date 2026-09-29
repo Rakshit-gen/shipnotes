@@ -62,12 +62,15 @@ def build_chain(model: BaseChatModel) -> Runnable:
     return prompt | model | parser
 
 
-def classify_with_llm(commits: list[Commit], model: BaseChatModel) -> list[Entry]:
+def classify_with_llm(
+    commits: list[Commit], model: BaseChatModel, batch_size: int = 25
+) -> list[Entry]:
     """Classify commits with the model. Commits it skips land in Section.OTHER."""
     if not commits:
         return []
-    result: ClassifiedBatch = build_chain(model).invoke({"commits": format_commits(commits)})
-    by_sha = {item.sha[:7]: item for item in result.items}
+    chunks = [commits[i : i + batch_size] for i in range(0, len(commits), batch_size)]
+    results = build_chain(model).batch([{"commits": format_commits(c)} for c in chunks])
+    by_sha = {item.sha[:7]: item for batch in results for item in batch.items}
     entries = []
     for c in commits:
         item = by_sha.get(c.short_sha)
