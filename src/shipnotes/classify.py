@@ -29,6 +29,8 @@ TYPE_TO_SECTION = {
     "refactor": Section.INTERNAL,
 }
 
+BREAKING_FOOTERS = ("BREAKING CHANGE:", "BREAKING-CHANGE:")
+
 
 @dataclass(frozen=True)
 class Entry:
@@ -38,9 +40,20 @@ class Entry:
     scope: str | None = None
 
 
-def classify_by_convention(commit: Commit) -> Entry | None:
-    """Classify a commit from its subject alone. None means the subject gave no answer."""
+def is_breaking(commit: Commit) -> bool:
     parsed = parse_subject(commit.subject)
+    if parsed and parsed.bang:
+        return True
+    return any(line.startswith(BREAKING_FOOTERS) for line in commit.body.splitlines())
+
+
+def classify_by_convention(commit: Commit) -> Entry | None:
+    """Classify a commit from its subject and footer. None means neither gave an answer."""
+    parsed = parse_subject(commit.subject)
+    text = parsed.text if parsed else commit.subject
+    scope = parsed.scope if parsed else None
+    if is_breaking(commit):
+        return Entry(commit, Section.BREAKING, text, scope)
     if parsed is None or parsed.type not in TYPE_TO_SECTION:
         return None
-    return Entry(commit, TYPE_TO_SECTION[parsed.type], parsed.text, parsed.scope)
+    return Entry(commit, TYPE_TO_SECTION[parsed.type], text, scope)
